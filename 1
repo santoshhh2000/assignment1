@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Admin Page</title>
+</head>
+<body>
+  <h1>Seller Admin Page</h1>
+
+  <!-- Form for adding a new stack value -->
+  <form id="stackForm">
+    <label for="stackValue">Stack Value:</label>
+    <input type="number" id="stackValue" required>
+    <button type="submit">Add Stack Value</button>
+  </form>
+
+  <!-- Table for displaying and managing stack values -->
+  <table border="1">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Stack Value</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="stackTableBody"></tbody>
+  </table>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+document.addEventListener('DOMContentLoaded', function () {
+  const stackForm = document.getElementById('stackForm');
+  const stackTableBody = document.getElementById('stackTableBody');
+
+  // CRUDCRUD API URL (Replace with your actual API URL)
+  const apiUrl = 'https://crudcrud.com/api/YOUR_API_KEY/stack';
+
+  // Function to fetch and display stack values
+  const fetchStackValues = async () => {
+    try {
+      const response = await axios.get(apiUrl);
+      const stackValues = response.data;
+      stackTableBody.innerHTML = ''; // Clear the table
+
+      stackValues.forEach(stack => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${stack._id}</td>
+          <td>${stack.stackValue}</td>
+          <td>
+            <button onclick="updateStackValue('${stack._id}', prompt('Enter new stack value:'))">Update</button>
+            <button onclick="deleteStackValue('${stack._id}')">Delete</button>
+          </td>
+        `;
+        stackTableBody.appendChild(row);
+      });
+    } catch (error) {
+      console.error('Error fetching stack values:', error);
+    }
+  };
+
+  // Function to add a new stack value
+  const addStackValue = async (event) => {
+    event.preventDefault();
+    const stackValueInput = document.getElementById('stackValue');
+    const stackValue = parseInt(stackValueInput.value, 10);
+
+    if (!isNaN(stackValue)) {
+      try {
+        await axios.post(apiUrl, { stackValue });
+        stackValueInput.value = ''; // Clear input after adding
+        fetchStackValues();
+      } catch (error) {
+        console.error('Error adding stack value:', error);
+      }
+    } else {
+      alert('Please enter a valid number for stack value.');
+    }
+  };
+
+  // Function to update an existing stack value
+  window.updateStackValue = async (id, newStackValue) => {
+    if (!isNaN(newStackValue)) {
+      try {
+        await axios.put(`${apiUrl}/${id}`, { stackValue: parseInt(newStackValue, 10) });
+        fetchStackValues();
+      } catch (error) {
+        console.error('Error updating stack value:', error);
+      }
+    } else {
+      alert('Please enter a valid number for stack value.');
+    }
+  };
+
+  // Function to delete an existing stack value
+  window.deleteStackValue = async (id) => {
+    if (confirm('Are you sure you want to delete this stack value?')) {
+      try {
+        await axios.delete(`${apiUrl}/${id}`);
+        fetchStackValues();
+      } catch (error) {
+        console.error('Error deleting stack value:', error);
+      }
+    }
+  };
+
+  // Initial fetch and display of stack values
+  fetchStackValues();
+
+  // Event listener for the stack form submission
+  stackForm.addEventListener('submit', addStackValue);
+});
